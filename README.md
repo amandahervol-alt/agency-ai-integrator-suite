@@ -16,9 +16,10 @@ This repository demonstrates **Model Context Protocol (MCP)** server architectur
 | Module | Location | Key Capabilities |
 | :--- | :--- | :--- |
 | **Model Context Protocol (MCP)** | [`mcp_server/`](mcp_server/) | FastMCP server exposing tools for CRM lead queries, campaign analytics, and automated action audit logging. |
-| **Intelligent Multi-Model Router** | [`workflows/model_router.py`](workflows/model_router.py) | API-first fallback engine across **Google Gemini**, **OpenAI**, and **Anthropic** with automatic failover and latency tracking. |
+| **Intelligent Multi-Model Router** | [`workflows/model_router.py`](workflows/model_router.py) | API-first fallback engine across **Anthropic Claude**, **Google Gemini**, and **OpenAI** with automatic failover and latency tracking. |
 | **Security Guardrails** | [`security/`](security/) | Prompt injection detection, PII redaction (SSN, Credit Cards), and strict Pydantic output schema validation. |
 | **Cost & Token Governance** | [`governance/`](governance/) | Real-time request token pricing, per-client API spend calculator, and 30-day TCO budget projection engine. |
+| **Unified Demonstration CLI** | [`app.py`](app.py) | Interactive runner executing demonstrations across all 4 suite pillars. |
 | **Client Discovery & Scope** | [`docs/`](docs/) | Consultative discovery call blueprint, solution architecture diagrams, and proposal templates for SMB clients. |
 
 ---
@@ -34,14 +35,14 @@ flowchart TD
     end
     
     subgraph Provider Tier
-        Router -->|Primary| Gemini[Google Gemini 1.5 Flash]
+        Router -->|Primary| Claude[Anthropic Claude 3.7 / 3.5]
+        Router -->|Failover| Gemini[Google Gemini 1.5 Flash]
         Router -->|Failover| OpenAI[OpenAI GPT-4o-mini]
-        Router -->|Complex Reasoning| Claude[Anthropic Claude 3.5 Sonnet]
     end
 
-    Gemini --> Validator[Structured Output Validator]
+    Claude --> Validator[Structured Output Validator]
+    Gemini --> Validator
     OpenAI --> Validator
-    Claude --> Validator
     
     subgraph Agentic Execution & Tools
         Validator -->|Validated JSON Schema| MCPServer[MCP Server: Agency Tools]
@@ -59,29 +60,34 @@ flowchart TD
 
 ### 1. Clone & Install Dependencies
 ```bash
-git clone https://github.com/your-username/agency-ai-integrator-suite.git
+git clone https://github.com/amandahervol-alt/agency-ai-integrator-suite.git
 cd agency-ai-integrator-suite
 pip install -r requirements.txt
 ```
 
-### 2. Run Automated Test Suite
+### 2. (Optional) Configure Live API Keys
+Copy `.env.example` to `.env` to enable live model inference:
+```env
+ANTHROPIC_API_KEY=sk-ant-your-key-here
+ANTHROPIC_MODEL=claude-3-7-sonnet-20250219
+```
+*(If no API key is provided, the suite executes in zero-config offline simulation mode).*
+
+### 3. Run the Unified Suite CLI
 ```bash
-py -m unittest discover tests
+# Run all 4 pillars end-to-end
+python app.py
+
+# Or run a specific pillar:
+python app.py --pillar mcp
+python app.py --pillar security
+python app.py --pillar agent
+python app.py --pillar governance
 ```
 
-### 3. Test MCP Server & Tools
+### 4. Run Automated Test Suite
 ```bash
-py -m mcp_server.client_runner
-```
-
-### 4. Test End-to-End AI Lead Enrichment Pipeline
-```bash
-py -m workflows.lead_enrichment_agent
-```
-
-### 5. Calculate Token & Infrastructure Cost Projection
-```bash
-py -m governance.token_calculator
+python -m unittest discover tests
 ```
 
 ---
@@ -89,11 +95,11 @@ py -m governance.token_calculator
 ## 🔒 Security & Data Compliance
 
 - **Prompt Injection Filter**: Blocks pattern vectors such as `ignore previous instructions`, `system prompt override`, and malicious script tags.
-- **PII Scrubbing**: Automatically replaces SSNs and credit card numbers with `[REDACTED_SSN]` before forwarding payloads to external LLM providers.
+- **PII Scrubbing**: Automatically replaces SSNs and credit card numbers with `[REDACTED_SSN]` and `[REDACTED_CREDIT_CARD]` before forwarding payloads to external LLM providers.
 - **Output Schema Enforcer**: Ensures zero downstream failures in Quickbooks/HubSpot integrations by enforcing strict JSON validation.
 
 ---
 
-## 📄 License & Attribution
+## 📄 License
 
-Distributed under the MIT License. Built for digital agencies scaling AI automations and client integrations.
+This project is licensed under the [MIT License](LICENSE).
