@@ -71,7 +71,6 @@ class IntelligentModelRouter:
                         resp = client.messages.create(
                             model=model,
                             max_tokens=1024,
-                            temperature=0.1,
                             system=system_prompt,
                             messages=[{"role": "user", "content": user_prompt}]
                         )
